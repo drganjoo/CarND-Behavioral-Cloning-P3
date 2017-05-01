@@ -34,7 +34,6 @@ The changes to the model include **dropout** layers in **fully connected** layer
 
 The following is the summary of the model:
 
-
 | Layer (type) | Output Shape | Param # | 
 |---------------|-------------|---------| 
 | input_1 (InputLayer) | (None, 160, 320, 3) | 0 | 
@@ -133,6 +132,7 @@ Here is a visualization of the architecture (note: visualizing the architecture 
 ####3. Creation of the Training Set & Training Process
 
 mention keras callbacks
+generator.py
 
 To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving:
 
