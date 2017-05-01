@@ -159,6 +159,33 @@ After augmenting data the following is the distribution:
 
 ![aug-barchart]
 
+Once the chosen model was able to drive successfully at 10mph I tried increasing the speed but wasn't able to go higher than 20 mph. However, I noticed from the feature extraction of conv1 layer that a lot of the filters have more or less same information. Hence, I decided to cut out some of the layers, reduced the filter sizes, included MaxPooling2D but overall the performance of the car reamined the same. Therefore I've stuck to the NVidia model.
+
+![sample-feature]
+
+Following is the code that has been used for producing this:
+~~~
+def outputFeatureMap(sess, ac, plt_num=1):
+    featuremaps = ac.shape[3]
+    for i in range(featuremaps):
+        image_to_show = (ac[0,:,:,i] + 0.5) * 255
+        plt.imshow(image_to_show, interpolation="nearest", cmap="gray")
+    plt.show()
+
+input_tensor = model.layers[0]
+norm_tensor = model.layers[1]
+crop_tensor = model.layers[2]
+conv1_tensor = model.layers[3]
+
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    image_norm = norm_tensor.output.eval(session=sess, feed_dict = {norm_tensor.input: image})
+    image_cropped = crop_tensor.output.eval(session=sess, feed_dict = {crop_tensor.input : image_norm})
+    ac = conv1_tensor.output.eval(session=sess, feed_dict = {conv1_tensor.input: image_cropped})
+    outputFeatureMap(sess, ac, 3)
+~~~
+
+
 At the end of the process, the vehicle is able to drive autonomously around track 1 without leaving the road.
 
 #### 2. Final Model Architecture
@@ -194,36 +221,7 @@ The following is the summary of the model:
 ![sample]
 ![sample-crop]
 
-### Feature Extraction from Conv1 Layer
-
-The following is the feature extraction output of the first convolutional layer:
-
-![sample-feature]
-
-Following is the code that has been used for producing this:
-~~~
-def outputFeatureMap(sess, ac, plt_num=1):
-    featuremaps = ac.shape[3]
-    for i in range(featuremaps):
-        image_to_show = (ac[0,:,:,i] + 0.5) * 255
-        plt.imshow(image_to_show, interpolation="nearest", cmap="gray")
-    plt.show()
-
-input_tensor = model.layers[0]
-norm_tensor = model.layers[1]
-crop_tensor = model.layers[2]
-conv1_tensor = model.layers[3]
-
-with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
-    image_norm = norm_tensor.output.eval(session=sess, feed_dict = {norm_tensor.input: image})
-    image_cropped = crop_tensor.output.eval(session=sess, feed_dict = {crop_tensor.input : image_norm})
-    ac = conv1_tensor.output.eval(session=sess, feed_dict = {conv1_tensor.input: image_cropped})
-    outputFeatureMap(sess, ac, 3)
-~~~
-
 [sample-feature]: ./writeup/sample-feature.png "Sample Image"
-
 
 #### 3. Creation of the Training Set & Training Process
 

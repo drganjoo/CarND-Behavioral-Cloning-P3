@@ -156,11 +156,11 @@ class DataGenerator(keras.callbacks.Callback):
     def get_steps(self, indices_to_use):
         return ceil(len(indices_to_use) / self.batch_size)
 
-    def choose_validation(self):
+    def choose_validation(self, rechoose=False):
         # do not recompute val_indices if they have already been computed once
         # as augmented data is based on indices, which have not been selected
         # for validation
-        if len(self.val_indices) > 0:
+        if not rechoose and len(self.val_indices) > 0:
             return
 
         assert len(self.y_steering) > 0, "Are you sure you have loaded data?"
@@ -345,19 +345,50 @@ class AugmentedMultiFolderGenerator(MultiFolderGenerator):
     def load(self, parent_folder="../sim-data"):
         super().load(parent_folder)
 
+        org_last_index = len(self.y_steering)
+
+        # flip those that have some angles in them
+        print("Flipping, count before:", len(self.y_steering))
+        some_angle = np.where(self.y_steering > 0.1)
+
+        for index in some_angle[0]:
+            self.image_loader.extend([self.create_flip_loader(self.filenames[index])])
+            self.y_steering = np.hstack((self.y_steering, -self.y_steering[index]))
+            self.org_index.extend([index])
+
+        assert len(self.y_steering) == len(self.image_loader)
+        assert len(self.filenames) == len(self.filenames_left)
+        assert len(self.filenames) == len(self.filenames_right)
+
+        print("Changing brightness, before this:", len(self.y_steering))
+
+        # change brightness of original images and keep that as a augmented set as well
+        for index in range(org_last_index):
+            self.image_loader.extend([self.create_brightness_loader(self.filenames[index])])
+            self.y_steering = np.hstack((self.y_steering, self.y_steering[index]))
+            self.org_index.extend([index])
+
+        assert len(self.y_steering) == len(self.image_loader)
+        assert len(self.filenames) == len(self.filenames_left)
+        assert len(self.filenames) == len(self.filenames_right)
+
         # augment data using the left and right images but these
         # should not be used for validation at all
+        print('-' * 40)
+        print('Regenerating validation')
+        print('-' * 40)
+
         self.choose_validation()
 
         # remove validation set from the indices we will look for augmenting images
-        indices = np.arange(len(self.y_steering))
+        indices = np.arange(org_last_index)
         indices = np.delete(indices, self.val_indices)
 
-        print('Before augmenting data:', len(indices))
+        print('Max data for left / right images:', len(indices))
 
         assert len(self.filenames_left) == len(self.filenames_right)
 
-        print('Using left and right camera images')
+        print('Using left and right camera images, before count:', len(self.y_steering))
 
         for i in indices:
             left = self.filenames_left[i]
@@ -366,31 +397,10 @@ class AugmentedMultiFolderGenerator(MultiFolderGenerator):
             # left and right images
             self.image_loader_augmented.extend([self.create_loader(left), self.create_loader(right)])
             # increase angle on the left image (go right), decrease angle on the right image (go left)
-            self.y_steering_augmented.extend([self.y_steering[i] + 0.3, self.y_steering[i] - 0.3])
+            self.y_steering_augmented.extend([self.y_steering[i] + 0.4, self.y_steering[i] - 0.4])
             # for debugging purposes keep the actual index we used for augmenting
             # so that we can test it out later on in iPython maybe
             self.org_index.extend([i, i])
-
-        # flip those that have some angles in them
-        print('Flipping images > 0.1 angle, before this:', len(self.y_steering_augmented))
-        some_angle = np.where(self.y_steering > 0.1)
-
-        for index in some_angle[0]:
-            self.image_loader_augmented.extend([self.create_flip_loader(self.filenames[index])])
-            self.y_steering_augmented.extend([-self.y_steering[index]])
-            self.org_index.extend([index])
-
-        assert len(self.y_steering_augmented) == len(self.image_loader_augmented)
-        assert len(self.filenames) == len(self.filenames_left)
-        assert len(self.filenames) == len(self.filenames_right)
-
-        print("Changing brightness, before this:", len(self.y_steering_augmented))
-
-        # change brightness of original images and keep that as a augmented set as well
-        for index in indices:
-            self.image_loader_augmented.extend([self.create_brightness_loader(self.filenames[index])])
-            self.y_steering_augmented.extend([self.y_steering[index]])
-            self.org_index.extend([index])
 
         # convert y_steering to an nparray
         self.y_steering_augmented = np.array(self.y_steering_augmented)
