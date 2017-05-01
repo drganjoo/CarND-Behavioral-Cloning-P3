@@ -1,118 +1,270 @@
-# Behaviorial Cloning Project
+# Behavioral Cloning 
 
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
+**Goals Of the Project**
 
-Overview
----
-This repository contains starting files for the Behavioral Cloning Project.
-
-In this project, you will use what you've learned about deep neural networks and convolutional neural networks to clone driving behavior. You will train, validate and test a model using Keras. The model will output a steering angle to an autonomous vehicle.
-
-We have provided a simulator where you can steer a car around a track for data collection. You'll use image data and steering angles to train a neural network and then use this model to drive the car autonomously around the track.
-
-We also want you to create a detailed writeup of the project. Check out the [writeup template](https://github.com/udacity/CarND-Behavioral-Cloning-P3/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup. The writeup can be either a markdown file or a pdf document.
-
-To meet specifications, the project will require submitting five files: 
-* model.py (script used to create and train the model)
-* drive.py (script to drive the car - feel free to modify this file)
-* model.h5 (a trained Keras model)
-* a report writeup file (either markdown or pdf)
-* video.mp4 (a video recording of your vehicle driving autonomously around the track for at least one full lap)
-
-This README file describes how to output the video in the "Details About Files In This Directory" section.
-
-Creating a Great Writeup
----
-A great writeup should include the [rubric points](https://review.udacity.com/#!/rubrics/432/view) as well as your description of how you addressed each point.  You should include a detailed description of the code used (with line-number references and code snippets where necessary), and links to other supporting documents or external references.  You should include images in your writeup to demonstrate how your code works with examples.  
-
-All that said, please be concise!  We're not looking for you to write a book here, just a brief description of how you passed each rubric point, and references to the relevant code :). 
-
-You're not required to use markdown for your writeup.  If you use another method please just submit a pdf of your writeup.
-
-The Project
----
-The goals / steps of this project are the following:
-* Use the simulator to collect data of good driving behavior 
-* Design, train and validate a model that predicts a steering angle from image data
-* Use the model to drive the vehicle autonomously around the first track in the simulator. The vehicle should remain on the road for an entire loop around the track.
+* Use the simulator to collect data of good driving behavior
+* Build, a convolution neural network in Keras that predicts steering angles from images
+* Train and validate the model with a training and validation set
+* Test that the model successfully drives around track one without leaving the road
 * Summarize the results with a written report
 
-### Dependencies
-This lab requires:
+[//]: # (Image refernces)
 
-* [CarND Term1 Starter Kit](https://github.com/udacity/CarND-Term1-Starter-Kit)
+[tb-model]: ./writeup/tb-graph.png "Tensorboard Model Image"
+[org-barchart]: ./writeup/sample-data-bar.png "Data Bar Graph"
+[aug-barchart]: ./writeup/augmented-data-bar.png "Augmented DataBar Graph"
+[sample]: ./writeup/sample.png "Sample Image"
+[sample-crop]: ./writeup/sample-crop.png "Sample Image"
+[sample-feature]: ./writeup/sample-feature.png "Sample Image"
+[side-training]: ./writeup/center_2017_04_21_12_45_38_249.jpg "Side Image"
+[side-training2]: ./writeup/center_2017_04_21_12_47_04_066.jpg "Side Image 2"
+[flipped]: ./writeup/flipped.png "Flipped"
+[brightness]: ./writeup/changed-brightness.png "Brightness"
 
-The lab enviroment can be created with CarND Term1 Starter Kit. Click [here](https://github.com/udacity/CarND-Term1-Starter-Kit/blob/master/README.md) for the details.
+## Rubric Points
 
-The following resources can be found in this github repository:
-* drive.py
-* video.py
-* writeup_template.md
+My project includes the following files:
+* model.py containing the script to create and train the model. It used keras **v2.0.3** functional API 
+* generator.py containing the script to generate data
+* drive.py for driving the car in autonomous mode
+* model.h5 containing a trained convolution neural network 
+* writeup_report.md summarizing the results
 
-The simulator can be downloaded from the classroom. In the classroom, we have also provided sample data that you can optionally use to help train your model.
-
-## Details About Files In This Directory
-
-### `drive.py`
-
-Usage of `drive.py` requires you have saved the trained model as an h5 file, i.e. `model.h5`. See the [Keras documentation](https://keras.io/getting-started/faq/#how-can-i-save-a-keras-model) for how to create this file using the following command:
-```sh
-model.save(filepath)
-```
-
-Once the model has been saved, it can be used with drive.py using this command:
-
+Using the Udacity provided simulator and my drive.py file, the car can be driven autonomously around the first track by executing 
 ```sh
 python drive.py model.h5
 ```
 
-The above command will load the trained model and use the model to make predictions on individual images in real-time and send the predicted angle back to the server via a websocket connection.
+*Note: It is not able to drive above 20 mph*
 
-Note: There is known local system's setting issue with replacing "," with "." when using drive.py. When this happens it can make predicted steering values clipped to max/min values. If this occurs, a known fix for this is to add "export LANG=en_US.utf8" to the bashrc file.
+## Model Architecture and Training Strategy
 
-#### Saving a video of the autonomous agent
+![Model][tb-model]
 
-```sh
-python drive.py model.h5 run1
-```
+I've used more or less **NVidia's model** for self driving (https://devblogs.nvidia.com/parallelforall/deep-learning-self-driving-cars/)
 
-The fourth argument `run1` is the directory to save the images seen by the agent to. If the directory already exists it'll be overwritten.
+The changes to the model include **dropout** layers in **fully connected** layers.
 
-```sh
-ls run1
+The following is the summary of the model:
 
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_424.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_451.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_477.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_528.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_573.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_618.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_697.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_723.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_749.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_817.jpg
-...
-```
+| Layer (type) | Output Shape | Param # | 
+|---------------|-------------|---------| 
+| input_1 (InputLayer) | (None, 160, 320, 3) | 0 | 
+| norm (Lambda)        | (None, 160, 320, 3) | 0 | 
+| crop (Cropping2D) (50 From top, 20 from bottom)   | (None, 90, 320, 3) | 0 |
+| conv1 (Conv2D) kernel=(5x5), strides=(2,2) | (None, 43, 158, 24) | 1824 |
+| conv2 (Conv2D) kernel=(5x5), strides=(2,2) | (None, 20, 77, 36) |21636|
+| conv3 (Conv2D) kernel=(5x5), strides=(2,2) | (None, 8, 37, 48) | 43248|
+| conv4 (Conv2D) kernel=(3x3), strides=(1,1) | (None, 6, 35, 64) | 27712|
+| conv5 (Conv2D) kernel=(3x3), strides=(1,1) | (None, 4, 33, 64) | 36928|
+| flatten (Flatten)  | (None, 8448)  | 0 |
+| nn1 (Dense) (Relu) | (None, 1164)  | 9834636 |
+| dropout_1 (Dropout) (0.5) | (None, 1164) | 0 |
+| nn2 (Dense) (Relu) |(None, 100) | 116500 |
+| dropout_2 (Dropout) (0.5) | (None, 100) | 0 |
+| nn3 (Dense) (Relu) | (None, 50) | 5050 |
+| dropout_3 (Dropout) (0.5) | (None, 50) | 0 |
+| nn4 (Dense) (Relu) | (None, 10) | 510 |
+| output (Dense) | (None, 1) | 11 | 
 
-The image file name is a timestamp when the image image was seen. This information is used by `video.py` to create a chronological video of the agent driving.
+Total params: **10,088,055**
 
-### `video.py`
+#### Reduction of Overfitting
 
-```sh
-python video.py run1
-```
+* More data was gathered to reduce overfitting:
+    * **Simple runs** on the track to keep car in center
+    * **Drove in Opposite Direction** to ensure there were some right turns
+    * **Extreme steering angles** by keeping the car on the right most or left most side and then steering it back to the center
 
-Create a video based on images found in the `run1` directory. The name of the video will be name of the directory following by `'.mp4'`, so, in this case the video will be `run1.mp4`.
+* The model contains **dropout layers** in order to reduce overfitting (model.py lines 47-51). 
 
-Optionally one can specify the FPS (frames per second) of the video:
+ 
+#### Model parameter tuning
 
-```sh
-python video.py run1 --fps 48
-```
+The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 56).
 
-The video will run at 48 FPS. The default FPS is 60.
+#### Appropriate training data
 
-#### Why create a video
+Sample-data provided by Udacity was used along with data generated by driving myself. Drove the car in the opposite direction on the track to make sure right turns were also included in the data.
 
-1. It's been noted the simulator might perform differently based on the hardware. So if your model drives succesfully on your machine it might not on another machine (your reviewer). Saving a video is a solid backup in case this happens.
-2. You could slightly alter the code in `drive.py` and/or `video.py` to create a video of what your model sees after the image is processed (may be helpful for debugging).
+Then generated smaller multiple runs of extreme turns from the extreme edges of the road. But I think this is also the cause of a little over steering by the car.
+
+Also data generated by myself needs to be further checked since at times the car does not maintain steering angle while turning but rather issues a series of jerky steering angles, each time coming back to 0. I would have liked it to maintain a smaller turning angle throughout the turn.
+
+For details about how I created the training data, see the next section. 
+
+### **Model Architecture and Training Strategy**
+
+#### 1. Solution Design Approach
+
+The overall strategy for deriving a model architecture was to have a few convolutional layers for feature extraction followed by some fully connected layers having a few dropouts to reduce overfitting (in case that happened).
+
+My first step was to use a convolution neural network model similar to the NVidia model as I thought this model might be appropriate due to their success in using it in real life.
+
+The initial trained model was not steering at all and was going straight into the sand. That is when I realized that the data I had collected was done using the keyboard and on the turns I wasn't able to maintain a steady angle throughout the turn therefore **bad data -> bad learning** happened. I then used mouse / joystick to make sure I drove around the circuit as much in the center as I could and on the turnings I tried to keep a steady angle.
+
+To make sure the data was somewhat uniform, a histogram was generated to figure out the kind of data was available:
+
+| Steering Angle | Number of Data points | % 
+|------|---|--------|
+|-1.00 | 4| 0.050 % |
+|-0.90 | 1| 0.012 % |
+|-0.80 | 2| 0.025 % |
+|-0.70 | 6| 0.075 % |
+|-0.60 | 11| 0.137 % |
+|-0.50 | 62| 0.772 % |
+|-0.40 | 78| 0.971 % |
+|-0.30 | 300| 3.733 % |
+|-0.20 | 473| 5.886 % |
+|**-0.10** | **838** | **10.428** % |
+|**0.00** | **5085**| **63.278** % |
+|**0.10** | **781**| **9.719** % |
+|0.20 | 161| 2.003 % |
+|0.30 | 172| 2.140 % |
+|0.40 | 42| 0.523 % |
+|0.50 | 12| 0.149 % |
+|0.60 | 5| 0.062 % |
+|0.70 | 1| 0.012 % |
+|0.80 | 0| 0.000 % |
+|0.90 | 2| 0.025 % |
+
+![org-barchart]
+
+Looking at the chart above it was clear that more steering angle data was required. Some augmenting techniques such as brightness decrease, flipping images and using left / right camera images were used.
+
+After augmenting data the following is the distribution:
+
+| Steering Angle | Number of Data points | % 
+|------|---|--------|
+|-1.00 | 84| 0.186 % |
+|-0.90 | 44| 0.097 % |
+|-0.80 | 106| 0.235 % |
+|-0.70 | 144| 0.319 % |
+|-0.60 | 341| 0.755 % |
+|-0.50 | 887| 1.963 % |
+|-0.40 | 6821| 15.093 % |
+|-0.30 | 2049| 4.534 % |
+|-0.20 | 3506| 7.758 % |
+|-0.10 | 3319| 7.344 % |
+|0.00 | 15461| 34.212 % |
+|0.10 | 2561| 5.667 % |
+|0.20 | 6833| 15.120 % |
+|0.30 | 1470| 3.253 % |
+|0.40 | 915| 2.025 % |
+|0.50 | 223| 0.493 % |
+|0.60 | 188| 0.416 % |
+|0.70 | 109| 0.241 % |
+|0.80 | 15| 0.033 % |
+|0.90 | 37| 0.082 % |
+
+![aug-barchart]
+
+Once the chosen model was able to drive successfully at 10mph I tried increasing the speed but wasn't able to go higher than 20 mph. However, I noticed from the feature extraction of conv1 layer that a lot of the filters have more or less same information. Hence, I decided to cut out some of the layers, reduced the filter sizes, included MaxPooling2D but overall the performance of the car reamined the same. Therefore I've stuck to the NVidia model.
+
+![sample-feature]
+
+Following is the code that has been used for producing this:
+~~~
+def outputFeatureMap(sess, ac, plt_num=1):
+    featuremaps = ac.shape[3]
+    for i in range(featuremaps):
+        image_to_show = (ac[0,:,:,i] + 0.5) * 255
+        plt.imshow(image_to_show, interpolation="nearest", cmap="gray")
+    plt.show()
+
+input_tensor = model.layers[0]
+norm_tensor = model.layers[1]
+crop_tensor = model.layers[2]
+conv1_tensor = model.layers[3]
+
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    image_norm = norm_tensor.output.eval(session=sess, feed_dict = {norm_tensor.input: image})
+    image_cropped = crop_tensor.output.eval(session=sess, feed_dict = {crop_tensor.input : image_norm})
+    ac = conv1_tensor.output.eval(session=sess, feed_dict = {conv1_tensor.input: image_cropped})
+    outputFeatureMap(sess, ac, 3)
+~~~
+
+
+At the end of the process, the vehicle is able to drive autonomously around track 1 without leaving the road.
+
+#### 2. Final Model Architecture
+
+Here is a visualization of the architecture
+
+![tb-model]
+
+The following is the summary of the model:
+
+| Layer (type) | Output Shape |
+|---------------|-------------|
+| input_1 (InputLayer) | (None, 160, 320, 3) |
+| norm (Lambda)        | (None, 160, 320, 3) |
+| crop (Cropping2D) (50 From top, 20 from bottom)   | (None, 90, 320, 3) |
+| conv1 (Conv2D) kernel=(5x5), strides=(2,2) | (None, 43, 158, 24) |
+| conv2 (Conv2D) kernel=(5x5), strides=(2,2) | (None, 20, 77, 36) |
+| conv3 (Conv2D) kernel=(5x5), strides=(2,2) | (None, 8, 37, 48) |
+| conv4 (Conv2D) kernel=(3x3), strides=(1,1) | (None, 6, 35, 64) |
+| flatten (Flatten)  | (None, 8448)  |
+| nn1 (Dense) (Relu) | (None, 1164)  |
+| dropout_1 (Dropout) (0.5) | (None, 1164) |
+| nn2 (Dense) (Relu) |(None, 100) |
+| dropout_2 (Dropout) (0.5) | (None, 100) |
+| nn3 (Dense) (Relu) | (None, 50) |
+| dropout_3 (Dropout) (0.5) | (None, 50) |
+| nn4 (Dense) (Relu) | (None, 10) |
+| output (Dense) | (None, 1) |
+
+
+### Sample Cropped Image from Keras
+
+![sample]
+![sample-crop]
+
+[sample-feature]: ./writeup/sample-feature.png "Sample Image"
+
+#### 3. Creation of the Training Set & Training Process
+
+A custom generator has been written (generator.py) that combines images / steering_angle from different folders, chooses validation set and then augments the data.
+
+Images are augmented on the fly by keeping the particular augmentation function (e.g. flipping, darkness etc.) in a list and by keeping only the indices to be returned in an array. When a batch is required the particular indices are retrieved, augmentation function is applied and then the batch of images is returned (generator.py line # 266 to 293).
+
+At the start of training, a validation set is randomly chosen from the set of images that does not include any of the augmented left / right steering images. This was done to keep the validation set to a realistic value and since left / right steering angles have been chosen  it was thought that it would be best to leave them out.
+
+The generator uses Keras callback mechanism to make sure that training data is shuffled on each epoch. The validation set is only chosen once at the begining of the training and then it is never shuffled or regenerated.
+
+*Note: I am not sure what effect this validation actually had on the training and this needs to be further looked into*
+
+#### Data Augmentation
+
+* **Image Flipping**: Original images that were found in folders have been flipped and their steering_angle has been negated
+* **Brightness**: New images consisting of decreased brightness from the set of Original + Flipped images are added
+* **Left / Right**: Left and right images are added to the set by using a constant **factor of 0.2**
+
+To make sure car would be able to recover from the extreme right or left of the road, I recorded some sessions with such kind of driving. Few examples include:
+
+![side-training]
+![side-training2]
+
+**Flipped Image Sample**
+
+![flipped]
+
+**Changed Brightness Sample**
+
+![brightness]
+
+
+#### Data for track 2
+
+Although I collected a few runs from track 2 but did not use them for the project since I've seen people being able to use only track 1 data to train and succcessfuly being able to run on track 2 as well.
+
+_**However my model does not run correctly on track 2 at all. I would need to look into the feature extraction from conv1 to figure out why it works so bad**_
+
+#### Keras Model Checkpoint
+
+I used ModelCheckpoint to automatically save the best score acheived on the validation set.
+
+~~~
+    mc = ModelCheckpoint(filepath=FLAGS.savefile, verbose=1, save_best_only=True)
+~~~
