@@ -8,6 +8,19 @@
 * Test that the model successfully drives around track one without leaving the road
 * Summarize the results with a written report
 
+[//]: # (Image refernces)
+
+[tb-model]: ./writeup/tb-graph.png "Tensorboard Model Image"
+[org-barchart]: ./writeup/sample-data-bar.png "Data Bar Graph"
+[aug-barchart]: ./writeup/augmented-data-bar.png "Augmented DataBar Graph"
+[sample]: ./writeup/sample.png "Sample Image"
+[sample-crop]: ./writeup/sample-crop.png "Sample Image"
+[sample-feature]: ./writeup/sample-feature.png "Sample Image"
+[side-training]: ./writeup/center_2017_04_21_12_45_38_249.jpg "Side Image"
+[side-training2]: ./writeup/center_2017_04_21_12_47_04_066.jpg "Side Image 2"
+[flipped]: ./writeup/flipped.png "Flipped"
+[brightness]: ./writeup/changed-brightness.png "Brightness"
+
 ## Rubric Points
 
 My project includes the following files:
@@ -26,7 +39,7 @@ python drive.py model.h5
 
 ## Model Architecture and Training Strategy
 
-[ModelArchitecture] ./writeup/tb-graph.png
+![Model][tb-model]
 
 I've used more or less **NVidia's model** for self driving (https://devblogs.nvidia.com/parallelforall/deep-learning-self-driving-cars/)
 
@@ -88,9 +101,9 @@ The overall strategy for deriving a model architecture was to have a few convolu
 
 My first step was to use a convolution neural network model similar to the NVidia model as I thought this model might be appropriate due to their success in using it in real life.
 
-My initial runs was not turning at all thats when I realized that using the keyboard I wasn't able to maintain a steady angle throughout the turn therefore **bad data -> bad learning** happened. I then used mouse / joystick to make sure I drove around the circuit as much in the center as I could.
+The initial trained model was not steering at all and was going straight into the sand. That is when I realized that the data I had collected was done using the keyboard and on the turns I wasn't able to maintain a steady angle throughout the turn therefore **bad data -> bad learning** happened. I then used mouse / joystick to make sure I drove around the circuit as much in the center as I could and on the turnings I tried to keep a steady angle.
 
-I generated a histogram to figure out the kind of data I had:
+To make sure the data was somewhat uniform, a histogram was generated to figure out the kind of data was available:
 
 | Steering Angle | Number of Data points | % 
 |------|---|--------|
@@ -115,47 +128,145 @@ I generated a histogram to figure out the kind of data I had:
 |0.80 | 0| 0.000 % |
 |0.90 | 2| 0.025 % |
 
-[SampleDataBar] ./writeup/sample-data-bar.png
+![org-barchart]
 
-The final step was to run the simulator to see how well the car was driving around track one. There were a few spots where the vehicle fell off the track... to improve the driving behavior in these cases, I ....
+Looking at the chart above it was clear that more steering angle data was required. Some augmenting techniques such as brightness decrease, flipping images and using left / right camera images were used.
 
-At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
+After augmenting data the following is the distribution:
+
+| Steering Angle | Number of Data points | % 
+|------|---|--------|
+|-1.00 | 84| 0.186 % |
+|-0.90 | 44| 0.097 % |
+|-0.80 | 106| 0.235 % |
+|-0.70 | 144| 0.319 % |
+|-0.60 | 341| 0.755 % |
+|-0.50 | 887| 1.963 % |
+|-0.40 | 6821| 15.093 % |
+|-0.30 | 2049| 4.534 % |
+|-0.20 | 3506| 7.758 % |
+|-0.10 | 3319| 7.344 % |
+|0.00 | 15461| 34.212 % |
+|0.10 | 2561| 5.667 % |
+|0.20 | 6833| 15.120 % |
+|0.30 | 1470| 3.253 % |
+|0.40 | 915| 2.025 % |
+|0.50 | 223| 0.493 % |
+|0.60 | 188| 0.416 % |
+|0.70 | 109| 0.241 % |
+|0.80 | 15| 0.033 % |
+|0.90 | 37| 0.082 % |
+
+![aug-barchart]
+
+At the end of the process, the vehicle is able to drive autonomously around track 1 without leaving the road.
 
 #### 2. Final Model Architecture
 
-The final model architecture (model.py lines 18-24) consisted of a convolution neural network with the following layers and layer sizes ...
+Here is a visualization of the architecture
 
-Here is a visualization of the architecture (note: visualizing the architecture is optional according to the project rubric)
+![tb-model]
 
-![alt text][image1]
+The following is the summary of the model:
 
-####3. Creation of the Training Set & Training Process
-
-mention keras callbacks
-generator.py
-
-To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving:
-
-![alt text][image2]
-
-I then recorded the vehicle recovering from the left side and right sides of the road back to center so that the vehicle would learn to .... These images show what a recovery looks like starting from ... :
-
-![alt text][image3]
-![alt text][image4]
-![alt text][image5]
-
-Then I repeated this process on track two in order to get more data points.
-
-To augment the data sat, I also flipped images and angles thinking that this would ... For example, here is an image that has then been flipped:
-
-![alt text][image6]
-![alt text][image7]
-
-Etc ....
-
-After the collection process, I had X number of data points. I then preprocessed this data by ...
+| Layer (type) | Output Shape |
+|---------------|-------------|
+| input_1 (InputLayer) | (None, 160, 320, 3) |
+| norm (Lambda)        | (None, 160, 320, 3) |
+| crop (Cropping2D) (50 From top, 20 from bottom)   | (None, 90, 320, 3) |
+| conv1 (Conv2D) kernel=(5x5), strides=(2,2) | (None, 43, 158, 24) |
+| conv2 (Conv2D) kernel=(5x5), strides=(2,2) | (None, 20, 77, 36) |
+| conv3 (Conv2D) kernel=(5x5), strides=(2,2) | (None, 8, 37, 48) |
+| conv4 (Conv2D) kernel=(3x3), strides=(1,1) | (None, 6, 35, 64) |
+| flatten (Flatten)  | (None, 8448)  |
+| nn1 (Dense) (Relu) | (None, 1164)  |
+| dropout_1 (Dropout) (0.5) | (None, 1164) |
+| nn2 (Dense) (Relu) |(None, 100) |
+| dropout_2 (Dropout) (0.5) | (None, 100) |
+| nn3 (Dense) (Relu) | (None, 50) |
+| dropout_3 (Dropout) (0.5) | (None, 50) |
+| nn4 (Dense) (Relu) | (None, 10) |
+| output (Dense) | (None, 1) |
 
 
-I finally randomly shuffled the data set and put Y% of the data into a validation set. 
+### Sample Cropped Image from Keras
 
-I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was Z as evidenced by ... I used an adam optimizer so that manually training the learning rate wasn't necessary.
+![sample]
+![sample-crop]
+
+### Feature Extraction from Conv1 Layer
+
+The following is the feature extraction output of the first convolutional layer:
+
+![sample-feature]
+
+Following is the code that has been used for producing this:
+~~~
+def outputFeatureMap(sess, ac, plt_num=1):
+    featuremaps = ac.shape[3]
+    for i in range(featuremaps):
+        image_to_show = (ac[0,:,:,i] + 0.5) * 255
+        plt.imshow(image_to_show, interpolation="nearest", cmap="gray")
+    plt.show()
+
+input_tensor = model.layers[0]
+norm_tensor = model.layers[1]
+crop_tensor = model.layers[2]
+conv1_tensor = model.layers[3]
+
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    image_norm = norm_tensor.output.eval(session=sess, feed_dict = {norm_tensor.input: image})
+    image_cropped = crop_tensor.output.eval(session=sess, feed_dict = {crop_tensor.input : image_norm})
+    ac = conv1_tensor.output.eval(session=sess, feed_dict = {conv1_tensor.input: image_cropped})
+    outputFeatureMap(sess, ac, 3)
+~~~
+
+[sample-feature]: ./writeup/sample-feature.png "Sample Image"
+
+
+#### 3. Creation of the Training Set & Training Process
+
+A custom generator has been written (generator.py) that combines images / steering_angle from different folders, chooses validation set and then augments the data.
+
+Images are augmented on the fly by keeping the particular augmentation function (e.g. flipping, darkness etc.) in a list and by keeping only the indices to be returned in an array. When a batch is required the particular indices are retrieved, augmentation function is applied and then the batch of images is returned (generator.py line # 266 to 293).
+
+At the start of training, a validation set is randomly chosen from the set of images that does not include any of the augmented left / right steering images. This was done to keep the validation set to a realistic value and since left / right steering angles have been chosen  it was thought that it would be best to leave them out.
+
+The generator uses Keras callback mechanism to make sure that training data is shuffled on each epoch. The validation set is only chosen once at the begining of the training and then it is never shuffled or regenerated.
+
+*Note: I am not sure what effect this validation actually had on the training and this needs to be further looked into*
+
+#### Data Augmentation
+
+* **Image Flipping**: Original images that were found in folders have been flipped and their steering_angle has been negated
+* **Brightness**: New images consisting of decreased brightness from the set of Original + Flipped images are added
+* **Left / Right**: Left and right images are added to the set by using a constant **factor of 0.2**
+
+To make sure car would be able to recover from the extreme right or left of the road, I recorded some sessions with such kind of driving. Few examples include:
+
+![side-training]
+![side-training2]
+
+**Flipped Image Sample**
+
+![flipped]
+
+**Changed Brightness Sample**
+
+![brightness]
+
+
+#### Data for track 2
+
+Although I collected a few runs from track 2 but did not use them for the project since I've seen people being able to use only track 1 data to train and succcessfuly being able to run on track 2 as well.
+
+_**However my model does not run correctly on track 2 at all. I would need to look into the feature extraction from conv1 to figure out why it works so bad**_
+
+#### Keras Model Checkpoint
+
+I used ModelCheckpoint to automatically save the best score acheived on the validation set.
+
+~~~
+    mc = ModelCheckpoint(filepath=FLAGS.savefile, verbose=1, save_best_only=True)
+~~~
