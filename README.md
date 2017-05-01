@@ -20,6 +20,7 @@
 [side-training2]: ./writeup/center_2017_04_21_12_47_04_066.jpg "Side Image 2"
 [flipped]: ./writeup/flipped.png "Flipped"
 [brightness]: ./writeup/changed-brightness.png "Brightness"
+[loss]: ./writeup/loss.png "Loss"
 
 ## Rubric Points
 
@@ -216,6 +217,8 @@ The following is the summary of the model:
 | output (Dense) | (None, 1) |
 
 
+![loss]
+
 ### Sample Cropped Image from Keras
 
 ![sample]
@@ -268,3 +271,12 @@ I used ModelCheckpoint to automatically save the best score acheived on the vali
 ~~~
     mc = ModelCheckpoint(filepath=FLAGS.savefile, verbose=1, save_best_only=True)
 ~~~
+
+## Shortcomings
+
+* While driving autonomously there are points when the car oscillates left and right. That particular scene needs to be debugged and figured out why it does that
+* Model does not work beyond 20 mph
+* Model does not work at all on track 2
+* Training data is not uniformly distributed. From the histogram it is evident that there are a lot more straight (0 steering angle) samples than left and right ones.
+
+![aug-barchart]
